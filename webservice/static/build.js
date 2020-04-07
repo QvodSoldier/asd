@@ -30792,7 +30792,7 @@ $__System.register("d", [], function (_export) {
     var self = this;
 
     self.selected = null;
-    self.containers = [];
+    self.pods = [];
     self.namespaces = [];
     self.selectNamespace = selectNamespace;
     self.toggleList = toggleNamespaceList;
@@ -30805,8 +30805,8 @@ $__System.register("d", [], function (_export) {
 
       self.selected = payload.data[0];
 
-      dashboardService.loadContainers(self.selected.metadata.name).then(function (payload) {
-        self.containers = payload.data;
+      dashboardService.loadPods(self.selected.metadata.name).then(function (payload) {
+        self.pods = payload.data;
       });
     });
 
@@ -30831,8 +30831,8 @@ $__System.register("d", [], function (_export) {
 
       self.selected = angular.isNumber(namespace) ? $scope.namespaces[namespace] : namespace;
 
-      dashboardService.loadContainers(namespace.metadata.name).then(function (payload) {
-        self.containers = payload.data;
+      dashboardService.loadPods(namespace.metadata.name).then(function (payload) {
+        self.pods = payload.data;
       });
 
       self.toggleList();
@@ -30872,8 +30872,8 @@ $__System.register('e', [], function (_export) {
                 $log.debug("loadNamspaces()");
                 return $http.get('/api/namespaces');
             },
-            loadContainers: function loadContainers(namespace) {
-                $log.debug("loadContainers()");
+            loadPods: function loadPods(namespace) {
+                $log.debug("loadPods()");
                 return $http.get('/api/namespaces/pods?namespace=' + namespace);
             }
         };
@@ -31459,7 +31459,7 @@ $__System.register('1', ['2', '3', '5', '10', '11', 'c'], function (_export) {
     execute: function () {
       angular.element(document).ready(function () {
 
-        var appName = 'kubernetes-web-terminal';
+        var appName = 'Letmein!!!';
         var $log = new ExternalLogger();
 
         $log = $log.getInstance("BOOTSTRAP");
