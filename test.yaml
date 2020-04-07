@@ -1,0 +1,15 @@
+apiVersion: debug.mahuang.cn/v1alpha1
+kind: DebugTask
+metadata:
+  name: debugtask-sample
+  namespace: default
+spec:
+  debugObjectInfo:
+    debugPodImage: busybox
+    debugPodName: ss
+  targetObjectInfo:
+    targePodContainerName: nginx
+    targetPodName: my-dep-c79b8cfbf-cdhql
+    targetPodNamespace: default
+  endTime: "2020-04-02T05:29:29Z"
+  startTime: "2020-04-02T05:29:29Z"

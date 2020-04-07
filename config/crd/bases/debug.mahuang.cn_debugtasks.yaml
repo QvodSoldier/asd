@@ -1,0 +1,122 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.2.5
+  creationTimestamp: null
+  name: debugtasks.debug.mahuang.cn
+spec:
+  additionalPrinterColumns:
+  - JSONPath: .spec.targetObjectInfo.targetPodName
+    name: TargetPod
+    type: string
+  - JSONPath: .spec.startTime
+    name: StartTime
+    type: string
+  - JSONPath: .spec.endTime
+    name: EndTime
+    type: string
+  - JSONPath: .spec.status.phase
+    name: Status
+    type: string
+  group: debug.mahuang.cn
+  names:
+    kind: DebugTask
+    listKind: DebugTaskList
+    plural: debugtasks
+    singular: debugtask
+  scope: Namespaced
+  subresources: {}
+  validation:
+    openAPIV3Schema:
+      description: DebugTask is the Schema for the debugtasks API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: DebugTaskSpec defines the desired state of DebugTask
+          properties:
+            debugObjectInfo:
+              description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
+                Important: Run "make" to regenerate code after modifying this file
+                DebugObjectInfo is the information of Debug tools'
+              properties:
+                debugPodImage:
+                  description: DebugPodimage is the image of debug Pod.
+                  type: string
+                debugPodName:
+                  description: DebugPodName is pod's name of the tool for debugging.
+                  type: string
+              required:
+              - debugPodImage
+              type: object
+            endTime:
+              description: EndTime means when dit the debug task end.
+              format: date-time
+              type: string
+            history:
+              description: History record all commands in this debug task.
+              items:
+                type: string
+              type: array
+            startTime:
+              description: StartTime means when did the debug task start.
+              format: date-time
+              type: string
+            targetObjectInfo:
+              description: TargetObjectInfo is the information of target to be debugged
+              properties:
+                targePodContainerName:
+                  description: TargetPodContainerName is the name of the target container
+                    in the target pod.
+                  type: string
+                targetPodName:
+                  description: TargetPodName is the target pod to be debugged.
+                  type: string
+                targetPodNamespace:
+                  description: TargetPodNamespace is the namespace of the target pod.
+                  type: string
+              required:
+              - targePodContainerName
+              - targetPodName
+              - targetPodNamespace
+              type: object
+          required:
+          - debugObjectInfo
+          - targetObjectInfo
+          type: object
+        status:
+          description: DebugTaskStatus defines the observed state of DebugTask
+          properties:
+            phase:
+              description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
+                of cluster Important: Run "make" to regenerate code after modifying
+                this file'
+              type: string
+          required:
+          - phase
+          type: object
+      type: object
+  version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

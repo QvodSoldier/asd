@@ -1,0 +1,196 @@
+package websocket
+
+import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"log"
+	"time"
+
+	"github.com/gorilla/websocket"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/remotecommand"
+)
+
+// PtyHandler is what remotecommand expects from a pty
+type PtyHandler interface {
+	io.Reader
+	io.Writer
+	remotecommand.TerminalSizeQueue
+}
+
+type ContainerInfo struct {
+	Namespace string `json:"namespace"`
+	Pod       string `json:"pod"`
+	Container string `json:"container"`
+}
+
+type TerminalSession struct {
+	*ContainerInfo
+
+	Alive     chan bool
+	Done      chan struct{}
+	SizeChan  chan remotecommand.TerminalSize
+	WSConn    *websocket.Conn
+	Client    rest.Interface
+	ClientCfg *rest.Config
+}
+
+// TerminalMessage is the messaging protocol between ShellController and TerminalSession.
+//
+// OP      DIRECTION  FIELD(S) USED  DESCRIPTION
+// ---------------------------------------------------------------------
+// bind    fe->be     SessionID      Id sent back from TerminalResponse
+// stdin   fe->be     Data           Keystrokes/paste buffer
+// resize  fe->be     Rows, Cols     New terminal size
+// stdout  be->fe     Data           Output from the process
+// toast   be->fe     Data           OOB message to be shown to the user
+type TerminalMessage struct {
+	Op   string
+	Data string
+	// SessionID string
+	// Shell     string
+	// UserName  string
+	Rows uint16
+	Cols uint16
+}
+
+// TerminalSize handles pty->process resize events
+// Called in a loop from remotecommand as long as the process is running
+func (t TerminalSession) Next() *remotecommand.TerminalSize {
+	t.Alive <- true
+	select { //nolint:gosimple
+	case size := <-t.SizeChan:
+		return &size
+	}
+}
+
+// Read handles pty->process messages (stdin, resize)
+// Called in a loop from remotecommand as long as the process is running
+func (t TerminalSession) Read(p []byte) (int, error) {
+	t.Alive <- true
+	mt, message, err := t.WSConn.ReadMessage()
+	log.Printf("read: mt=%d message=%s", mt, message)
+	if err != nil {
+		log.Printf("read error: err=%+v", err)
+		return 0, err
+	}
+
+	var msg TerminalMessage
+	if err := json.Unmarshal(message, &msg); err != nil {
+		log.Printf("read unmarshal error: err=%v msg=%v", err, msg)
+		return 0, err
+	}
+
+	switch msg.Op {
+	case "echo":
+		return 0, t.Echo(msg)
+	case "stdin":
+		return copy(p, msg.Data), nil
+	case "resize":
+		t.SizeChan <- remotecommand.TerminalSize{Width: msg.Cols, Height: msg.Rows}
+		return 0, nil
+	default:
+		return 0, fmt.Errorf("unknown message type '%s'", msg.Op)
+	}
+}
+
+// Write handles process->pty stdout
+// Called from remotecommand whenever there is any output
+func (t TerminalSession) Write(p []byte) (int, error) {
+	t.Alive <- true
+	log.Printf("write: receive=%s", string(p))
+	msg := TerminalMessage{
+		Op:   "stdout",
+		Data: string(p),
+	}
+
+	if err := t.WSConn.WriteJSON(msg); err != nil {
+		log.Printf("write error: err=%+v", err)
+		return 0, err
+	}
+	return len(p), nil
+}
+
+// Toast can be used to send the user any OOB messages
+// hterm puts these in the center of the terminal
+func (t TerminalSession) Toast(p string) error {
+	t.Alive <- true
+	msg := TerminalMessage{
+		Op:   "toast",
+		Data: p,
+	}
+
+	if err := t.WSConn.WriteJSON(msg); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Close cleanly close the connection by sending a close message and then
+// waiting (with timeout) for the server to close the connection.
+func (t TerminalSession) Close() {
+	t.WSConn.Close()
+	close(t.Done)
+	close(t.Alive)
+	log.Println("Terminal session closed")
+}
+
+func (t TerminalSession) Echo(msg TerminalMessage) error {
+	err := t.WSConn.WriteJSON(msg)
+	if err != nil {
+		log.Printf("echo error; err=%v", err)
+	}
+	return err
+}
+
+func (t *TerminalSession) Ping(stopCh <-chan struct{}) {
+
+	pingInterval := 20
+	idleTimeout := 120
+
+	ticker := time.NewTicker(time.Duration(pingInterval) * time.Second)
+	writeWait := time.Second * 10
+	idle := 0
+	unHealthyStateCnt := 0
+
+	pingLimit := idleTimeout/pingInterval + 1
+
+	defer func() {
+		log.Println("ping: stopped")
+		ticker.Stop()
+	}()
+
+	for {
+		select {
+		case <-ticker.C:
+			if err := t.WSConn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(writeWait)); err != nil {
+				log.Printf("ping error: err=%v", err)
+				unHealthyStateCnt++
+				if unHealthyStateCnt >= pingLimit {
+					log.Printf("ping: reaching idle timeout %d, closing connection", idleTimeout)
+					t.WSConn.Close()
+					return
+				}
+			} else {
+				log.Println("ping success")
+				unHealthyStateCnt = 0
+				if idle >= idleTimeout {
+					log.Printf("ping: reaching idle timeout %d, closing connection", idleTimeout)
+					t.WSConn.Close()
+					return
+				}
+				idle += pingInterval
+			}
+		case s := <-t.Alive:
+			log.Printf("ping: alive signal received: %v", s)
+			idle = 0
+		case s := <-stopCh:
+			log.Printf("ping: stop signal received: %v", s)
+			return
+		case <-t.Done:
+			log.Println("ping: done")
+			return
+		}
+	}
+}

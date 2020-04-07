@@ -1,0 +1,18 @@
+syntax = "proto3";
+package asdagent;
+
+service Debug {
+  rpc Debug (DebugRequest) returns (DebugResult) {}
+}
+
+message DebugRequest {
+  string TargetPodUUID = 1;
+  string TargetContainerID = 2;
+  string TargetDebugToolsPodUUID = 3;
+  string TargetDebugToolsContainerID = 4;
+}
+
+message DebugResult {
+  string pid = 1;
+  string dtpid = 2;
+}

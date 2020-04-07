@@ -1,0 +1,7 @@
+apiVersion: debug.mahuang.cn/v1alpha1
+kind: DebugTask
+metadata:
+  name: debugtask-sample
+spec:
+  # Add fields here
+  foo: bar

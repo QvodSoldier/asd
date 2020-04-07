@@ -1,0 +1,7 @@
+domain: mahuang.cn
+repo: ggstudy/asd
+resources:
+- group: debug
+  kind: DebugTask
+  version: v1alpha1
+version: "2"

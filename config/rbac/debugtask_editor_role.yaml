@@ -1,0 +1,24 @@
+# permissions for end users to edit debugtasks.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: debugtask-editor-role
+rules:
+- apiGroups:
+  - debug.mahuang.cn
+  resources:
+  - debugtasks
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - debug.mahuang.cn
+  resources:
+  - debugtasks/status
+  verbs:
+  - get
