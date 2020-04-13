@@ -10,12 +10,12 @@ func getPod(name, namespace, image, nodeName string) *corev1.Pod {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
-			Labels:    map[string]string{"DebugApp": name},
+			Labels:    map[string]string{"DebugApp": name, "app": "asd"},
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
 				{
-					Name:            "debug-tool",
+					Name:            "asd",
 					Image:           image,
 					ImagePullPolicy: corev1.PullAlways,
 					Args:            []string{"-c", "./mnt/agent/asd_agent"},

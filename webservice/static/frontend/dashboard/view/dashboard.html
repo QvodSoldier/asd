@@ -47,7 +47,7 @@
                                                         </md-card-title-text>
                                                     </md-card-title>
                                                     <md-card-actions layout="row" layout-align="end center">
-                                                        <md-button class="md-fab md-primary" aria-label="terminal" target='_blank' ng-click="open(it.metadata.namespace, it.metadata.name, it2.name)">
+                                                        <md-button class="md-fab md-primary" aria-label="terminal" target='_blank' ng-href='/api/namespaces/debugimage?namespace={{it.metadata.namespace}}&podName={{it.metadata.name}}&containerName={{it2.name}}'>
                                                             <md-icon md-svg-icon="terminal"></md-icon>
                                                         </md-button>
                                                     </md-card-actions>

@@ -5,10 +5,9 @@ import (
 	"github.com/astaxie/beego/context/param"
 )
 
-//30873
 func init() {
 
-	beego.GlobalControllerRouter["ggstudy/asd/webservice/controllers:MainController"] = append(beego.GlobalControllerRouter["k8-web-terminal/controllers:MainController"],
+	beego.GlobalControllerRouter["ggstudy/asd/webservice/controllers:MainController"] = append(beego.GlobalControllerRouter["ggstudy/asd/webservice/controllers:MainController"],
 		beego.ControllerComments{
 			Method:           "Get",
 			Router:           `/`,
@@ -37,11 +36,19 @@ func init() {
 
 	beego.GlobalControllerRouter["ggstudy/asd/webservice/controllers:MainController"] = append(beego.GlobalControllerRouter["ggstudy/asd/webservice/controllers:MainController"],
 		beego.ControllerComments{
-			Method:           "ContainerTerminal",
-			Router:           `/container/terminal`,
+			Method:           "DebugImage",
+			Router:           `/api/namespaces/debugimage`,
 			AllowHTTPMethods: []string{"get"},
 			MethodParams:     param.Make(),
 			Filters:          nil,
 			Params:           nil})
 
+	beego.GlobalControllerRouter["ggstudy/asd/webservice/controllers:MainController"] = append(beego.GlobalControllerRouter["ggstudy/asd/webservice/controllers:MainController"],
+		beego.ControllerComments{
+			Method:           "ContainerTerminal",
+			Router:           `/api/terminal`,
+			AllowHTTPMethods: []string{"get"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
 }

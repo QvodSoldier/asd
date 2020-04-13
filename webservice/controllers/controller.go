@@ -3,14 +3,10 @@ package controllers
 import (
 	"log"
 
-	"ggstudy/asd/webservice/models"
+	"ggstudy/asd/webservice/controllers/websocket"
 
 	"github.com/astaxie/beego"
 	"k8s.io/apimachinery/pkg/labels"
-)
-
-var (
-	cache = models.NewCache()
 )
 
 type MainController struct {
@@ -31,7 +27,7 @@ func (c *MainController) Get() {
 
 // @router /api/namespaces [get]
 func (c *MainController) Namespaces() {
-	namespaces, err := cache.NameSpaceLister.List(labels.Everything())
+	namespaces, err := websocket.Cache.NameSpaceLister.List(labels.Everything())
 	if err != nil {
 		log.Println(err)
 	}
@@ -42,13 +38,20 @@ func (c *MainController) Namespaces() {
 
 func (c *MainController) NamespacePods() {
 	namespace := c.GetString("namespace")
-	pods, err := cache.PodLister.Pods(namespace).List(labels.Everything())
+	pods, err := websocket.Cache.PodLister.Pods(namespace).List(labels.Everything())
 	if err != nil {
 		log.Println(err)
 	}
 
 	c.Data["json"] = pods
 	c.ServeJSON()
+}
+
+func (c *MainController) DebugImage() {
+	c.Data["namespace"] = c.GetString("namespace")
+	c.Data["pod"] = c.GetString("podName")
+	c.Data["container"] = c.GetString("containerName")
+	c.TplName = "biaodan.html"
 }
 
 func (c *MainController) ContainerTerminal() {

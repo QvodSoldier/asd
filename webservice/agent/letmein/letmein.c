@@ -15,7 +15,7 @@
 static char child_stack[STACK_SIZE];
 
 char* const container_args[] = {
-   "/bin/bash",
+   "/bin/sh",
    NULL
 };
 
@@ -28,7 +28,7 @@ int child_main() {
 main(int argc, char* argv[]) {
     int i;
     char nspath[1024];
-    char *namespaces[] = { "ipc", "uts", "net", "pid", "mnt" };
+    char *namespaces[] = { "ipc", "uts", "net", "pid", "mnt", };
 
     if (geteuid()) { fprintf(stderr, "%s\n", "abort: you want to run this as root"); exit(1); }
 
@@ -60,7 +60,8 @@ main(int argc, char* argv[]) {
 
     system("mount -t proc proc /proc");
     char *cmd[] = {"/bin/sh", NULL};
-    execvp("/bin/sh", cmd);      // Execute a command in namspace
+    execvp("/bin/sh", cmd);
+    // Execute a command in namspace
     // int child_pid = clone(child_main, child_stack+STACK_SIZE, CLONE_NEWNS | SIGCHLD, NULL);
     // waitpid(child_pid, NULL, 0);
     // printf("Parent - container stopped!\n");

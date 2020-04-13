@@ -105,13 +105,13 @@ func (r *DebugTaskReconciler) updateStatus(instance *debugv1alpha1.DebugTask) er
 	log := r.Log.WithValues("debugtask", "status-flow")
 
 	name := "debug-pod-" + instance.Name
-	namespace := instance.Spec.TargetObjectInfo.TargetPodNamespace
+	namespace := instance.Namespace
 	image := instance.Spec.DebugObjectInfo.DebugPodImage
 	switch instance.Status.Phase {
 	case "":
 		node, err := r.getNodeName(types.NamespacedName{
 			Name:      instance.Spec.TargetObjectInfo.TargetPodName,
-			Namespace: namespace})
+			Namespace: instance.Spec.TargetObjectInfo.TargetPodNamespace})
 		if err != nil {
 			return err
 		}
@@ -138,7 +138,11 @@ func (r *DebugTaskReconciler) updateStatus(instance *debugv1alpha1.DebugTask) er
 			return err
 		}
 		return nil
-	case debugv1alpha1.DebugSucceeded:
+	case debugv1alpha1.DebugRuning:
+		return nil
+	case debugv1alpha1.DebugPending:
+		return nil
+	default:
 		pod := &corev1.Pod{}
 		err := r.Get(context.TODO(), types.NamespacedName{
 			Name:      instance.Spec.DebugObjectInfo.DebugPodName,
@@ -152,8 +156,6 @@ func (r *DebugTaskReconciler) updateStatus(instance *debugv1alpha1.DebugTask) er
 		}
 		return nil
 	}
-
-	return nil
 }
 
 // get node that debug target on

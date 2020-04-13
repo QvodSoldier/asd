@@ -12,7 +12,7 @@ var terminalContainer = document.getElementById('terminal-container');
 //optionElements.cursorBlink.addEventListener('change', createTerminal);
 
 var Query = function () {
-  // This function is anonymous, is executed immediately and 
+  // This function is anonymous, is executed immediately and
   // the return value is assigned to QueryString!
   var query_string = {};
   var query = window.location.search.substring(1);
@@ -30,34 +30,35 @@ var Query = function () {
     } else {
       query_string[pair[0]].push(decodeURIComponent(pair[1]));
     }
-  } 
+  }
   return query_string;
 }();
 
 function httpGet(url, successCallback, errorCallback)
 {
     var xmlHttp = new XMLHttpRequest();
-    xmlHttp.onreadystatechange = function() { 
-        if (xmlHttp.readyState != 4) 
+    xmlHttp.onreadystatechange = function() {
+        if (xmlHttp.readyState != 4)
             return;
 
         if (xmlHttp.status == 200)
             successCallback  && successCallback(xmlHttp.responseText);
-        else 
+        else
             errorCallback  && errorCallback();
     }
-    xmlHttp.open("GET", url, true); // true for asynchronous 
+    xmlHttp.open("GET", url, true); // true for asynchronous
     xmlHttp.send(null);
 }
 
-var name = Query.name;
+var debugImage = Query.debugImage;
 var namespace = Query.namespace;
+var pod = Query.pod
 var container = Query.container;
 var socket = null;
 
-createTerminal(name, namespace, container, '/bin/bash');
+createTerminal(debugImage, namespace, pod, container);
 
-function createTerminal(name, namespace, container, command) {
+function createTerminal(debugImage, namespace, pod, container) {
   while (terminalContainer.children.length) {
     terminalContainer.removeChild(terminalContainer.children[0]);
   }
@@ -73,8 +74,8 @@ function createTerminal(name, namespace, container, command) {
   console.log(term.rows);
 
   var protocol = (location.protocol === 'https:') ? 'wss://' : 'ws://';
-  var socketURL = protocol + location.hostname + ((location.port) ? (':' + location.port) : '') + '/container/terminal/shell/ws';
-  socketURL += '?name=' + name + '&namespace=' + namespace + '&container='+ container + '&cols=' + term.cols + '&rows=' + term.rows;
+  var socketURL = protocol + location.hostname + ((location.port) ? (':' + location.port) : '') + '/api/terminal/asd/sock';
+  socketURL += '?debugImage=' + debugImage + '&namespace=' + namespace + '&pod='+ pod +'&container='+ container + '&cols=' + term.cols + '&rows=' + term.rows;
   socket = new ReconnectingWebSocket(socketURL);
   socket.debug = false;
   socket.timeoutInterval = 5400;
@@ -133,4 +134,3 @@ function runFakeTerminal() {
     term.write(data);
   });
 }
-

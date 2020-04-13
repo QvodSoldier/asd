@@ -9,6 +9,7 @@ require (
 	github.com/gorilla/websocket v1.4.0
 	github.com/onsi/ginkgo v1.11.0
 	github.com/onsi/gomega v1.8.1
+	github.com/satori/go.uuid v1.2.0
 	github.com/shiena/ansicolor v0.0.0-20151119151921-a422bbe96644 // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/viper v1.3.2

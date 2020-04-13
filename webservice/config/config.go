@@ -28,23 +28,9 @@ func configLogger() {
 	Logger.SetFormatter(customFormatter)
 }
 
-type asdConfig struct {
-	websocket WSConfig
-}
-
-type WSConfig struct {
-	ReadBufferSize   int //`envconfig:"default=4096"`
-	WriteBufferSize  int //`envconfig:"default=4096"`
-	HandShakeTimeOut int //`envconfig:"default=5"`
-	PingInterval     int //`envconfig:"default=20"`
-	IdleTimeout      int //`envconfig:"default=120"`
-}
-
-func LoadConfig() asdConfig {
+func init() {
 	viper.SetDefault("LOG_LEVEL", "INFO")
+	viper.SetDefault("NAMESPACE", "default")
 	viper.AutomaticEnv()
 	configLogger()
-	// TODO: 加载配置文件的流程
-	a := asdConfig{}
-	return a
 }

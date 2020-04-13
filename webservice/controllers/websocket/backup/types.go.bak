@@ -20,9 +20,10 @@ type PtyHandler interface {
 }
 
 type ContainerInfo struct {
-	Namespace string `json:"namespace"`
-	Pod       string `json:"pod"`
-	Container string `json:"container"`
+	DebugImage string `json:"debugImage"`
+	Namespace  string `json:"namespace"`
+	Pod        string `json:"pod"`
+	Container  string `json:"container"`
 }
 
 type TerminalSession struct {

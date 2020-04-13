@@ -30796,7 +30796,17 @@ $__System.register("d", [], function (_export) {
     self.namespaces = [];
     self.selectNamespace = selectNamespace;
     self.toggleList = toggleNamespaceList;
-    //  self.terminal     = terminal;
+//     self.open = open;
+//     //  self.terminal     = terminal;
+//
+// // 到这了
+//     $scope.gethisList = function(namespace, podName, containerName)
+//      { var url = host + 'experience/student/buy/list?requestId=123456';
+//      $http.post(url,{ "currentPage":page, "pageSize":size, "openId": openId //以参数的形式获得
+//      })
+//      .success(function(data){ if(data.message == "Success")
+//      { $scope.results = data.result; $scope.totalPage = data.result.totalPage; callback && callback(data.result); } })
+//      .error(function(data){ console.log("fail"); }); }; $scope.cancel = function () { $modalInstance.close(); }; }
 
     // Load all nodes
 
@@ -30821,6 +30831,25 @@ $__System.register("d", [], function (_export) {
       $log.debug("toggleNamespaceList() ");
       $mdSidenav('left').toggle();
     }
+
+    // function open(namespace, podName, containerName) {
+    //   var modalInstance = $modal.open({
+    //     templateUrl : 'myModelContent1.html',
+    //     controller : 'ModalHisCtrl',
+    //     size: 'lg',
+    //     // specify controller for modal size : size,
+    //     resolve : {
+    //       host : function(){ return $scope.app.host; },
+    //       //得到html页面中的数据
+    //       namespace : function(){ return namespace; },
+    //       podName : function(){ return podName; },
+    //       containerName : function(){ return containerName; }
+    //     }
+    //   });
+    //
+    //     modalInstance.result.then(function(selectedItem) { },
+    //     function(){ $log.info('Modal dismissed at: ' + new Date()); });
+    // }
 
     /**
      * Show Containers

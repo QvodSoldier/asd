@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1alpha1
+package debugtask
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -87,7 +87,7 @@ type DebugTaskStatus struct {
 // +kubebuilder:printcolumn:name="TargetPod",type=string,JSONPath=`.spec.targetObjectInfo.targetPodName`
 // +kubebuilder:printcolumn:name="StartTime",type=string,JSONPath=`.spec.startTime`
 // +kubebuilder:printcolumn:name="EndTime",type=string,JSONPath=`.spec.endTime`
-// +kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.phase`
+// +kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.spec.status.phase`
 type DebugTask struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -103,8 +103,4 @@ type DebugTaskList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []DebugTask `json:"items"`
-}
-
-func init() {
-	SchemeBuilder.Register(&DebugTask{}, &DebugTaskList{})
 }

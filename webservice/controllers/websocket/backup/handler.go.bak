@@ -1,23 +1,19 @@
 package websocket
 
 import (
-	"context"
 	"encoding/json"
 
 	// "flag"
 	"fmt"
-	pb "ggstudy/asd/webservice/agent/grpc"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
 	// "path/filepath"
 	"github.com/astaxie/beego"
 	"github.com/gorilla/websocket"
-	"google.golang.org/grpc"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -28,14 +24,6 @@ import (
 	// "k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
-)
-
-var (
-	address = os.Getenv("ADDRESS")
-	uuid    = os.Getenv("UUID")
-	cid     = os.Getenv("CID")
-	dtuuid  = os.Getenv("DTUUID")
-	dtcid   = os.Getenv("DTCID")
 )
 
 var upgrader = websocket.Upgrader{
@@ -56,14 +44,41 @@ type WSController struct {
 // HandleTerminalSession is used to handle exec Request
 func (h *WSController) HandleTerminalSession() {
 	containerinfo := &ContainerInfo{
-		Namespace: h.GetString("namespace"),
-		Pod:       h.GetString("pod"),
-		Container: h.GetString("container"),
+		DebugImage: h.GetString("debugImage"),
+		Namespace:  h.GetString("namespace"),
+		Pod:        h.GetString("pod"),
+		Container:  h.GetString("container"),
 	}
 	fmt.Println(containerinfo)
+	ws := &wsTask{
+		containerinfo: *containerinfo,
+	}
+	// 创建debugTask，等待debug容器启动，得到4个uuid和dt的地址,构造pb.DebugRequst,获取两个pid
+	drq, err := ws.getDebugRequest()
+	if err != nil {
+		log.Printf("get debug request error: %v", err)
+		return
+	}
+
+	drs, err := ws.getPID(drq)
+	if err != nil {
+		if err := ws.updateDebugTaskStatus("Failed"); err != nil {
+			log.Printf("update status to failed error: %v", err)
+		}
+		log.Printf("get pid error: %v", err)
+		return
+	}
+
+	if err = ws.updateDebugTaskStatus("Debuging"); err != nil {
+		log.Printf("update status to debuging error: %v", err)
+		return
+	}
 
 	conn, err := upgrader.Upgrade(h.Ctx.ResponseWriter, h.Ctx.Request, nil)
 	if err != nil {
+		if err := ws.updateDebugTaskStatus("Failed"); err != nil {
+			log.Printf("update status to failed error: %v", err)
+		}
 		log.Printf("upgrader error: err=%v", err)
 		http.Error(h.Ctx.ResponseWriter, err.Error(), http.StatusBadRequest)
 		return
@@ -85,25 +100,36 @@ func (h *WSController) HandleTerminalSession() {
 	)
 
 	if _, buf, err = conn.ReadMessage(); err != nil {
+		if err := ws.updateDebugTaskStatus("Failed"); err != nil {
+			log.Printf("update status to failed error: %v", err)
+		}
 		log.Printf("HandleTerminalSession: can't Recv: %v", err)
 		return
 	}
 
 	if err = json.Unmarshal(buf, &msg); err != nil {
+		if err := ws.updateDebugTaskStatus("Failed"); err != nil {
+			log.Printf("update status to failed error: %v", err)
+		}
 		log.Printf("HandleTerminalSession: can't UnMarshal (%v): %s", err, buf)
 		return
 	}
 
 	if msg.Op != "bind" {
+		if err := ws.updateDebugTaskStatus("Failed"); err != nil {
+			log.Printf("update status to failed error: %v", err)
+		}
 		log.Printf("HandleTerminalSession: expected 'bind' message, got: %s", msg.Op)
 		return
 	}
 
 	go terminalSession.Ping(h.StopCh)
 
-	dr := getPID()
-	err = startProcess(&terminalSession, terminalSession, dr.Pid, dr.Dtpid)
+	err = startProcess(&terminalSession, terminalSession, drs.Pid, drs.Dtpid)
 	if err != nil {
+		if err := ws.updateDebugTaskStatus("Failed"); err != nil {
+			log.Printf("update status to failed error: %v", err)
+		}
 		log.Printf("Error occured on remote connection: err=%v", err)
 	}
 }
@@ -148,27 +174,6 @@ func startProcess(t *TerminalSession, ptyHandler PtyHandler, pid, dtpid string) 
 		TerminalSizeQueue: ptyHandler,
 		Tty:               true,
 	})
-}
-
-func getPID() *pb.DebugResult {
-	conn, err := grpc.Dial(address, grpc.WithInsecure())
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer conn.Close()
-	c := pb.NewDebugClient(conn)
-
-	r, err := c.Debug(context.Background(),
-		&pb.DebugRequest{
-			TargetPodUUID:               uuid,
-			TargetContainerID:           cid,
-			TargetDebugToolsPodUUID:     dtuuid,
-			TargetDebugToolsContainerID: dtcid,
-		})
-	if err != nil {
-		log.Println(err)
-	}
-	return r
 }
 
 func GenerateRestConfig(ep, tk string) *rest.Config {

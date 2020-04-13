@@ -18,7 +18,7 @@ spec:
   - JSONPath: .spec.endTime
     name: EndTime
     type: string
-  - JSONPath: .spec.status.phase
+  - JSONPath: .status.phase
     name: Status
     type: string
   group: debug.mahuang.cn
