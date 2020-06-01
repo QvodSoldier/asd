@@ -17,7 +17,7 @@ func getPod(name, namespace, image, nodeName string) *corev1.Pod {
 				{
 					Name:            "asd",
 					Image:           image,
-					ImagePullPolicy: corev1.PullAlways,
+					ImagePullPolicy: corev1.PullIfNotPresent,
 					Args:            []string{"-c", "./mnt/agent/asd_agent"},
 					Command:         []string{"/bin/sh"},
 					SecurityContext: &corev1.SecurityContext{

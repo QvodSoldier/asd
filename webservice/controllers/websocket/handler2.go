@@ -254,6 +254,7 @@ func (t *TSockjs) ServeHTTP() {
 
 	if err := startProcess(containerinfo, wsConn); err != nil {
 		log.Println(err)
+		wsConn.WsClose()
 	}
 
 	t.TplName = "terminal.html"
@@ -266,6 +267,10 @@ func startProcess(t *ContainerInfo, wsConn *WsConnection) error {
 	// 创建debugTask，等待debug容器启动，得到4个uuid和dt的地址,构造pb.DebugRequst,获取两个pid
 	drq, err := wst.getDebugRequest()
 	if err != nil {
+		if err := wst.updateDebugTaskStatus("Failed"); err != nil {
+			log.Printf("update status to failed error: %v", err)
+		}
+
 		log.Printf("get debug request error: %v", err)
 		return err
 	}
@@ -301,7 +306,6 @@ func startProcess(t *ContainerInfo, wsConn *WsConnection) error {
 		SubResource("exec").
 		Param("container", "asd")
 
-	log.Println(drs.GetPid(), drs.GetDtpid())
 	req.VersionedParams(&v1.PodExecOptions{
 		Container: "asd",
 		Command:   []string{"./mnt/agent/letmein", drs.GetPid(), drs.GetDtpid()},
@@ -327,10 +331,12 @@ func startProcess(t *ContainerInfo, wsConn *WsConnection) error {
 		TerminalSizeQueue: handler,
 		Tty:               true,
 	}); err != nil {
-		fmt.Println("handler", err)
+		if err := wst.updateDebugTaskStatus("Failed"); err != nil {
+			log.Printf("update status to failed error: %v", err)
+		}
+
 		return err
-
 	}
-	return err
 
+	return err
 }
