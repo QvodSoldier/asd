@@ -6,7 +6,7 @@ require (
 	github.com/astaxie/beego v1.12.1
 	github.com/go-logr/logr v0.1.0
 	github.com/golang/protobuf v1.3.2
-	github.com/gorilla/websocket v1.4.0
+	github.com/gorilla/websocket v1.4.1
 	github.com/onsi/ginkgo v1.11.0
 	github.com/onsi/gomega v1.8.1
 	github.com/satori/go.uuid v1.2.0
